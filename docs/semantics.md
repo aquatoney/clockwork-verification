@@ -1,4 +1,9 @@
-# Execution model and proof contracts
+# Structured IR interpreter and proof contracts
+
+This document concerns `Execution.lean`, not the event-generating DES design
+model in `DES.lean`. The latter has an independently defined reference execution
+and a completed-horizon theorem; see [design_proof.md](design_proof.md). A general
+refinement between these two models is not proved.
 
 This document specifies the executable semantics added to the recursive compiler
 model. The theorem names, hypotheses, and executable definitions are the source

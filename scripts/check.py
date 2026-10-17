@@ -42,6 +42,9 @@ def main():
         "compiled_admit_safe", "admit_conserves_events", "compiled_boundary_signals",
         "compiled_boundary_conserves_outputs", "compiled_domain_has_owner",
         "globalFold_matches_grouped_fold",
+        "fire_pending_balance", "composed_event_accounting", "fire_commutes", "mixed_diamond",
+        "completed_run_reference", "compiled_completed_observations",
+        "compiled_domain_design_reference", "dsl_domain_design_reference",
     }
     if missing := required - {name.rsplit(".", 1)[-1] for name in checked}:
         sys.exit(f"Missing principal theorem axiom reports: {sorted(missing)}")

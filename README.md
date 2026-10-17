@@ -5,8 +5,9 @@ Simulation Schedulers** (ACM SIGOPS ATC 2026, Section 4.2).
 
 The artifact contains a recursive DSL and IR compiler, executable finite IR
 semantics, and theorems connecting successful compilation to those semantics.
-It distinguishes compiler-established obligations, consequences under explicit
-binding/runtime contracts, and the correspondence to the C++ implementation.
+A second event-generating design model proves completed-horizon equivalence
+for the static-domain conservative scheduling core. These are abstract-design
+results; correspondence to the C++ implementation is a separate obligation.
 
 ## Reproduce
 
@@ -45,6 +46,44 @@ accepted output again changes nothing.
 The transformations establish I1–I3's structural conditions; validation checks
 declared effects and resolved ownership. This is not a proof that arbitrary
 external handler code agrees with a declaration.
+
+**Event-generating DES design.** `DES.lean` defines an event step that consumes
+one pending occurrence, executes the event's handler, generates successors from
+the pre-event state, and accumulates the event contribution. The global pending
+multiset includes queued and in-flight events. Composed execution chooses a
+local reference minimum through its conservative safe bound; sequential
+reference execution independently chooses a global reference minimum. Each run
+generates its own successors. There is no opaque `commit` in this model.
+
+`DES.completed_run_reference` constructs a complete sequential reference run
+from any finite composed run that has completed horizon H. Model storage,
+aggregate value, and the entire pending multiset are identical. It does not
+assume `ConflictOrdered`, `CallsChronological`, a common precomputed event log,
+or the existence of a reference run with the desired answer.
+
+`DES.compiled_domain_design_reference` connects that design result to an
+accepted domain's effective bound, checked domain summaries, and resolved plan.
+`DES.dsl_domain_design_reference` starts from DSL compilation and uses the
+program horizon. `ProgramBinding` explicitly restricts the local body to a
+sequential dispatcher (with optional drain preludes), associates event handlers
+with its declared handler types, and maps event nodes to the compiled plan.
+The compiler establishes summary compatibility; the binding establishes that
+those summaries cover the actual abstract handlers.
+
+This theorem covers **static domains with local reference-order dispatch**.
+It does not prove a refinement from the complete recursive IR interpreter to
+the event-generating model. Arbitrary Batch event grouping, Filter/Choice state
+effects, and dynamic repartitioning are not covered by this completed-horizon
+theorem. Their structural and local-operation results remain separate below.
+These are remaining **design proof** boundaries, distinct from C++ faithfulness.
+
+A clock certificate states local completed frontiers, forward safe bounds, and
+lookahead inequalities. It may change at every event step. The proof derives
+the safe reordering of a domain choice and the reference minimum from these
+conditions and checked effects; whole-execution ordering is not supplied as a
+hypothesis. Completion means no pending event at or before H, not exhaustion
+of an interpreter's fuel. No unconditional termination or clock-progress theorem
+is claimed. See [the design specification and proof map](docs/design_proof.md).
 
 **Recursive IR execution.** `Execution.lean` defines `evaluate`, a fuel-bounded
 interpreter for recursive `Code`: sequencing, loops, state-dependent branches,
@@ -102,6 +141,12 @@ bounds with inclusive endpoints require the separate FIFO/tie-order contract in
 
 ## Executable witnesses and scope checks
 
+`DESExamples.lean` checks a late-first domain execution with state-dependent
+successor generation, a separately executed global reference schedule, an
+identical aggregate, and a retained future event. It invokes both Core and DSL
+design bridges. A negative example checks that insufficient lookahead prevents
+the proposed late-first step.
+
 `Examples.lean` includes a nonempty accepted execution with two domains, an
 actually inverted independent pair, tightened admission, a retained future
 event, routing, announcements, and a global aggregate. It invokes the compiler
@@ -128,7 +173,9 @@ being mistaken for a compiler-established property.
 | `Execution.lean` | Recursive executable semantics and compiler/DSL semantic refinement. |
 | `ExecutionTrace.lean` | Safety of dynamically recorded calls and conditional global handler-trace equivalence. |
 | `ExecutionObligations.lean` | Admission, boundary, ownership, and fold consequences in the interpreter state. |
-| `Examples.lean` | Nonempty execution witnesses and counterexamples to stronger claims. |
+| `Examples.lean` | Structured-interpreter witnesses and counterexamples. |
+| `DES.lean` | Event-generating semantics, local conservative clock contracts, reference-run construction, and static-domain compiler/DSL bridges. |
+| `DESExamples.lean` | Independently generated reference/composed executions, dynamic successors, and lookahead rejection. |
 
 `normalizeSync` is a historical flat illustration. The compiler and new execution
 proofs use recursive `Code`, `syncPass`, and `fixBoundary`.
@@ -141,22 +188,28 @@ The original source comparison used Clockwork commit
 resolved, lexical bounds and plans; SSA resolution, dynamic binding discovery,
 and generated C++ code must implement those contracts.
 
-This artifact does **not** include a mechanized translation of C++, a concurrent
-message-passing runtime, a termination/progress proof, or an independently
-event-generating reference DES simulator. Domain visits in `evaluate` are serial;
-the artifact does not derive arbitrary cross-domain interleaving safety from
-declared domain summaries. Such summaries must cover actual effects under the
-binding contract. Event generation and external callable behavior are supplied
-by the deterministic runtime interface. Their faithfulness to C++ is not checked
-by Lean. Program horizon is preserved as metadata; reaching a completed horizon
-is an execution obligation.
+The design model, structured IR interpreter, and C++ implementation are three
+different objects. `DES.lean` proves completed-horizon equivalence for its
+specified static-domain design. `Execution.lean` proves group serialization in
+the structured IR interpreter. A general refinement from that interpreter,
+including arbitrary Stage composition, to the DES model is **not** proved.
+The executable design example and `ProgramBinding` make the covered fragment
+explicit; the presence of two models is not itself a proof of their general
+correspondence.
 
-Passes repair potentially unsafe input IR. We prove properties and semantic
-serialization of accepted **output**, not equality with the behavior of unsafe
-pre-normalization IR. The full paper-level completed-horizon observation
-criterion additionally relies on binding validity, event generation/delivery,
-round completion, and implementation correspondence. The exact formal scope and
-remaining contracts are specified in [docs/semantics.md](docs/semantics.md).
+No mechanized C++ translation, concrete transport protocol, termination guarantee,
+or clock-progress proof is included. Implementations must realize the abstract
+handler, ownership, and completed-frontier contracts. In the DES model, transport
+location is erased while every queued/in-flight event remains in the global
+pending multiset. The correctness proof is conditional on reaching a completed
+horizon; it constructs a corresponding completed sequential run rather than
+assuming one.
+
+Passes repair potentially unsafe input IR. We prove properties of accepted
+output, not preservation of unsafe pre-normalization behavior. The exact
+separation between the [design theorem](docs/design_proof.md), the
+[structured interpreter](docs/semantics.md), and implementation correspondence
+is part of the artifact's specification.
 
 ## Development assistance
 
