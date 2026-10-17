@@ -160,12 +160,10 @@ remaining contracts are specified in [docs/semantics.md](docs/semantics.md).
 
 ## Development assistance
 
-The initial formalization was developed with assistance from Kimi K3. The
-subsequent execution semantics, compiler bridges, examples, and proof-scope
-review were developed with assistance from OpenAI Codex. Authors are responsible
-for reviewing the definitions, theorem statements, and implementation contracts;
-a successful Lean build checks the formal derivations, not correspondence to
-the intended system by itself.
+This artifact was developed with assistance from AI coding agents, including
+Kimi K3. The authors are responsible for reviewing the definitions, theorem
+statements, and implementation contracts; a successful Lean build checks the
+formal derivations, not correspondence to the intended system by itself.
 
 ## License
 
