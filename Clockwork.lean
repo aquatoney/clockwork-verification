@@ -79,7 +79,9 @@ theorem admitted_available (window safe : Nat) (events : List Event)
       | tail _ mem => exact ih h.2 mem
   exact certificate e (bounded result.1 through member)
 
--- Local sync rewrite, with its effective value already in lexical scope.
+-- Historical flat view of the local sync rewrite, with its effective value
+-- already in lexical scope. The compiler and its semantic bridge use recursive
+-- Core.Code, Core.syncPass and Core.fixBoundary, not normalizeSync below.
 inductive Bound where
   | literal (time : Nat)
   | effective
